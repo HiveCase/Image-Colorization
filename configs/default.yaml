@@ -1,0 +1,27 @@
+# Configuration for colorviz failure analysis.
+# Detection thresholds are the main thing to tune to your dataset.
+
+model:
+  name: "piddnad/ddcolor_modelscope"   # HuggingFace weights id
+  input_size: 512                       # DDColor native input resolution
+  device: null                          # null -> auto (cuda if available)
+
+analysis:
+  max_side: 768                         # downscale long side for speed
+  include_boundary_chart: true
+
+thresholds:
+  # --- no-reference (absolute) ---
+  desaturation_mean_chroma: 8.0         # mean chroma below this => desaturated
+  oversaturation_chroma_p99: 110.0      # 99th-pct chroma above this => oversaturated
+  global_cast: 0.55                     # single-hue dominance above this => cast
+  edge_bleeding: 2.2                    # chroma-on-edge ratio above this => bleeding
+  region_inconsistency: 120.0           # within-region ab variance above this => patchy
+  halo_energy: 4.0                      # hi-freq chroma near edges above this => halo
+  implausible_hue_frac: 0.06            # fraction of rare-hue pixels above this => implausible
+
+  # --- reference (absolute, need colour GT) ---
+  low_fidelity_ciede2000: 12.0          # mean CIEDE2000 above this => low fidelity
+
+  # --- stability (relative to baseline colorization) ---
+  instability_ab_shift: 9.0             # mean |Δab| vs baseline above this => unstable
