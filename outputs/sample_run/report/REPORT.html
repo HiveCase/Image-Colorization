@@ -1,0 +1,119 @@
+<!doctype html><html><head><meta charset="utf-8">
+<title>Failure Analysis — MockColorizer (smoke test)</title>
+<style>
+ body { font-family: -apple-system, Segoe UI, Roboto, sans-serif;
+         max-width: 960px; margin: 2rem auto; padding: 0 1rem; color:#222; }
+ h1 { border-bottom: 3px solid #333; padding-bottom:.3rem; }
+ h2 { margin-top: 2rem; border-bottom:1px solid #ccc; }
+ table { border-collapse: collapse; margin: 1rem 0; }
+ td { border: 1px solid #bbb; padding: 4px 10px; }
+ img { border:1px solid #ddd; border-radius:6px; margin:.5rem 0; }
+ code { background:#f2f2f2; padding:1px 4px; border-radius:3px; }
+</style></head><body>
+<h1>Failure Analysis Report — MockColorizer (smoke test)</h1>
+<br>
+<h2>1. Overview</h2>
+<br>
+<div style="">• Total (image, stress-variant) evaluations: **49**</div>
+<div style="">• Evaluations exhibiting at least one failure: **47 (96%)**</div>
+<br>
+<h3>Failure rate by stress condition</h3>
+<br>
+<table>
+<tr><td>Stress condition</td><td>Evaluated</td><td>With failure</td><td>Rate</td></tr>
+<tr><td>baseline</td><td>3</td><td>3</td><td>100%</td></tr>
+<tr><td>complex_lighting</td><td>21</td><td>21</td><td>100%</td></tr>
+<tr><td>fine_texture</td><td>12</td><td>12</td><td>100%</td></tr>
+<tr><td>out_of_domain</td><td>12</td><td>10</td><td>83%</td></tr>
+<tr><td>semantic_boundary</td><td>1</td><td>1</td><td>100%</td></tr>
+</table>
+<br>
+<h3>Most common failure modes</h3>
+<br>
+<table>
+<tr><td>Failure mode</td><td>Count</td></tr>
+<tr><td>low_fidelity</td><td>36</td></tr>
+<tr><td>color_bleeding</td><td>24</td></tr>
+<tr><td>global_color_cast</td><td>18</td></tr>
+<tr><td>halo</td><td>8</td></tr>
+<tr><td>instability</td><td>7</td></tr>
+<tr><td>desaturation</td><td>3</td></tr>
+</table>
+<br>
+<h2>2. Figures</h2>
+<br>
+<p>**Failures by stress condition**</p>
+<br>
+<img src="figures/failures_by_condition.png" alt="Failures by stress condition" style="max-width:100%;">
+<br>
+<p>**Severity heatmap**</p>
+<br>
+<img src="figures/severity_heatmap.png" alt="Severity heatmap" style="max-width:100%;">
+<br>
+<p>**Distribution of mean_chroma**</p>
+<br>
+<img src="figures/metric_mean_chroma.png" alt="Distribution of mean_chroma" style="max-width:100%;">
+<br>
+<p>**Distribution of ciede2000**</p>
+<br>
+<img src="figures/metric_ciede2000.png" alt="Distribution of ciede2000" style="max-width:100%;">
+<br>
+<p>**Distribution of edge_bleeding**</p>
+<br>
+<img src="figures/metric_edge_bleeding.png" alt="Distribution of edge_bleeding" style="max-width:100%;">
+<br>
+<h2>3. Taxonomy — where and how the model fails</h2>
+<br>
+<h3>out_of_domain</h3>
+<br>
+<div style="">• Expected failure modes: desaturation, global_color_cast, implausible_hue, multimodal_averaging</div>
+<div style="">• Observed failure modes: color_bleeding (6), halo (5), global_color_cast (4), desaturation (3)</div>
+<br>
+<div style="margin-left:2em;">• **color_bleeding** — Colour leaks across object boundaries so that an object's hue spills onto its neighbour. Measured as chroma variation concentrated on luminance edges.</div>
+<div style="margin-left:2em;">• **halo** — A thin ring of anomalous chroma hugs high-contrast edges, a classic artefact of upsampling a low-resolution ab prediction.</div>
+<div style="margin-left:2em;">• **global_color_cast** — A single hue dominates the whole frame (e.g. everything tinted teal), usually triggered by an unusual global luminance statistic.</div>
+<br>
+<h3>complex_lighting</h3>
+<br>
+<div style="">• Expected failure modes: global_color_cast, desaturation, instability, low_fidelity</div>
+<div style="">• Observed failure modes: low_fidelity (21), color_bleeding (8), instability (7), global_color_cast (4), halo (3)</div>
+<br>
+<div style="margin-left:2em;">• **low_fidelity** — With a colour ground-truth available, the predicted colours are far from the true colours (high CIEDE2000 / ab error).</div>
+<div style="margin-left:2em;">• **color_bleeding** — Colour leaks across object boundaries so that an object's hue spills onto its neighbour. Measured as chroma variation concentrated on luminance edges.</div>
+<div style="margin-left:2em;">• **instability** — A small, colour-preserving change to the input (mild lighting shift, light blur) produces a disproportionately large change in the output colours.</div>
+<br>
+<h3>fine_texture</h3>
+<br>
+<div style="">• Expected failure modes: region_inconsistency, halo, instability</div>
+<div style="">• Observed failure modes: low_fidelity (12), global_color_cast (8), color_bleeding (8)</div>
+<br>
+<div style="margin-left:2em;">• **low_fidelity** — With a colour ground-truth available, the predicted colours are far from the true colours (high CIEDE2000 / ab error).</div>
+<div style="margin-left:2em;">• **global_color_cast** — A single hue dominates the whole frame (e.g. everything tinted teal), usually triggered by an unusual global luminance statistic.</div>
+<div style="margin-left:2em;">• **color_bleeding** — Colour leaks across object boundaries so that an object's hue spills onto its neighbour. Measured as chroma variation concentrated on luminance edges.</div>
+<br>
+<h3>semantic_boundary</h3>
+<br>
+<div style="">• Expected failure modes: color_bleeding, halo, region_inconsistency</div>
+<div style="">• Observed failure modes: color_bleeding (1)</div>
+<br>
+<div style="margin-left:2em;">• **color_bleeding** — Colour leaks across object boundaries so that an object's hue spills onto its neighbour. Measured as chroma variation concentrated on luminance edges.</div>
+<br>
+<h2>4. Qualitative examples (worst cases)</h2>
+<br>
+<img src="figures/gallery_worst.png" alt="worst cases" style="max-width:100%;">
+<br>
+<div style="">• `market` / `gamma_high` — **severe** — color_bleeding, halo, low_fidelity</div>
+<div style="">• `portrait` / `jpeg_q15` — **severe** — color_bleeding, global_color_cast, low_fidelity</div>
+<div style="">• `landscape` / `jpeg_q15` — **severe** — color_bleeding, global_color_cast, low_fidelity</div>
+<div style="">• `landscape` / `blur` — **severe** — color_bleeding, global_color_cast, low_fidelity</div>
+<div style="">• `landscape` / `down_up_4x` — **severe** — color_bleeding, global_color_cast, low_fidelity</div>
+<div style="">• `portrait` / `underexpose` — **severe** — halo, instability, low_fidelity</div>
+<div style="">• `portrait` / `harsh_shadow` — **severe** — color_bleeding, instability, low_fidelity</div>
+<div style="">• `market` / `gamma_low` — **severe** — color_bleeding, low_fidelity</div>
+<br>
+<h2>5. Method notes</h2>
+<br>
+<div style="">• Ground-truth is obtained by converting colour photos to grayscale, colorizing, and comparing to the original. Reference metrics (PSNR, SSIM, CIEDE2000, ab-MSE) are only applied to scene-colour-preserving variants (lighting, texture); out-of-domain variants use no-reference and stability metrics only.</div>
+<div style="">• Severity is graded relative to detection thresholds (`configs/default.yaml`); tune these to your dataset before drawing hard conclusions.</div>
+<div style="">• The synthetic boundary chart isolates colour-bleeding and halo behaviour on hard luminance edges.</div>
+</body></html>
